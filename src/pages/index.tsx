@@ -1,4 +1,4 @@
-import { Fragment, ReactElement, useCallback, useState } from "react";
+import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import RootLayout from "@/layouts/root-layout";
 import MainLayout from "@/layouts/main-layout";
@@ -38,7 +38,7 @@ const Home = (props: Props) => {
   const width = 300;
   const height = 300;
 
-  const { webcamRef, boundingBox, isLoading, detected, facesDetected, imgRef } =
+  const { boundingBox, isLoading, detected, facesDetected, imgRef } =
     useFaceDetection({
       faceDetectionOptions: {
         model: "short",
@@ -56,6 +56,7 @@ const Home = (props: Props) => {
         }),
     });
 
+  const webcamRef = useRef<Webcam>(null)
   const capture = () => {
     const imageSrc = webcamRef?.current?.getScreenshot();
     if (imageSrc) {
@@ -64,6 +65,23 @@ const Home = (props: Props) => {
       const arrImg = [...img, imageSrc];
       setImg(arrImg);
     }
+  };
+
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+
+  const getDevices = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter((device) => device.kind === 'videoinput');
+    setDevices(videoDevices);
+  };
+
+  useEffect(() => {
+    getDevices();
+  }, []);
+
+  const handleDeviceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedDevice(event.target.value);
   };
 
   // console.log("img", img);
@@ -109,9 +127,9 @@ const Home = (props: Props) => {
                   <div className="mt-2">
                     {box.height >= 0.4 ? (
                       box.yCenter >= 0.28 &&
-                      box.yCenter <= 0.5 &&
-                      box.xCenter >= 0.25 &&
-                      box.xCenter <= 0.4 ? (
+                        box.yCenter <= 0.5 &&
+                        box.xCenter >= 0.25 &&
+                        box.xCenter <= 0.4 ? (
                         <div className="text-xs text-success text-nowrap">
                           กรุณาค้างไว้ 3 วินาที
                         </div>
@@ -128,13 +146,20 @@ const Home = (props: Props) => {
                   </div>
                 </div>
               ))}
-              <Webcam
-                ref={webcamRef}
-                width={width}
-                height={height}
-                forceScreenshotSourceSize
-                className="object-cover p-0 rounded-xl drop-shadow-xl"
-              />
+              {selectedDevice && (
+                <Webcam
+                  ref={webcamRef}
+                  width={width}
+                  height={height}
+                  forceScreenshotSourceSize
+                  videoConstraints={{
+                    deviceId: selectedDevice,
+                    width,
+                    height
+                  }}
+                  className="object-cover p-0 rounded-xl drop-shadow-xl"
+                />
+              )}
             </div>
             <div className="p-2 border-2 rounded-lg min-w-52">
               <p className="text-lg font-medium">ค่าการตรวจจับ</p>
@@ -146,6 +171,16 @@ const Home = (props: Props) => {
                 </div>
               ))}
             </div>
+          </div>
+          <div>
+            {/* <select value={selectedDevice || ''} onChange={handleDeviceChange}>
+              <option value="">Select a camera</option>
+              {devices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label}
+                </option>
+              ))}
+            </select> */}
           </div>
           <div className="w-full max-w-[30rem]">
             <p>{`Loading: ${isLoading}`}</p>
