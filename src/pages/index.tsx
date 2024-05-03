@@ -4,7 +4,7 @@ import RootLayout from "@/layouts/root-layout";
 import MainLayout from "@/layouts/main-layout";
 import { DateRange } from "react-day-picker";
 import Alert from "@/components/alert";
-import { Button, Input } from "@nextui-org/react";
+import { Button, Input, cn } from "@nextui-org/react";
 import apiBase from "@/api/base";
 import useLoaderGlobal from "@/hooks/useLoaderGlobal";
 import DatePicker from "@/components/date-picker";
@@ -33,8 +33,8 @@ const Home = (props: Props) => {
     loaderGlobal.stop();
   };
 
-  const width = 500;
-  const height = 500;
+  const width = 300;
+  const height = 300;
 
   const { webcamRef, boundingBox, isLoading, detected, facesDetected } =
     useFaceDetection({
@@ -54,13 +54,15 @@ const Home = (props: Props) => {
         }),
     });
 
+  // console.log("boundingBox", boundingBox);
+
   return (
     <Fragment>
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-center gap-5 text-4xl font-bold uppercase">
           Detect Face Website
         </div>
-        <Container className="flex justify-center gap-10">
+        <Container className="flex flex-col items-center justify-center gap-10">
           <div style={{ width, height, position: "relative" }}>
             {boundingBox.map((box, index) => (
               <div
@@ -73,24 +75,59 @@ const Home = (props: Props) => {
                   height: `${box.height * 100}%`,
                   zIndex: 1,
                 }}
-                className="border-2 shadow-lg border-success rounded-xl shadow-success"
-              />
+              >
+                <div
+                  className={cn(
+                    "border-2 shadow-lg  rounded-xl h-full w-full",
+                    box.height >= 0.4
+                      ? box.yCenter >= 0.28 &&
+                        box.yCenter <= 0.5 &&
+                        box.xCenter >= 0.25 &&
+                        box.xCenter <= 0.4
+                        ? "border-success shadow-success"
+                        : "border-warning shadow-warning"
+                      : "border-danger shadow-danger"
+                  )}
+                ></div>
+                {box.height >= 0.4 ? (
+                  box.yCenter >= 0.28 &&
+                  box.yCenter <= 0.5 &&
+                  box.xCenter >= 0.25 &&
+                  box.xCenter <= 0.4 ? (
+                    <div className="mt-2 text-xs text-success text-nowrap">
+                      กรุณาค้างไว้ 3 วินาที
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-xs text-warning text-nowrap">
+                      กรุณาขยับให้อยู่ตรงกลาง
+                    </div>
+                  )
+                ) : (
+                  <div className="mt-2 text-xs text-danger text-nowrap">
+                    อยู่ห่างเกินไป
+                  </div>
+                )}
+              </div>
             ))}
             <Webcam
               ref={webcamRef}
+              width={width}
+              height={height}
               forceScreenshotSourceSize
-              style={{
-                height,
-                width,
-                // position: "absolute",
-              }}
               className="object-cover p-0 rounded-xl drop-shadow-xl"
             />
           </div>
-          <div>
+          <div className="w-full max-w-[30rem]">
             <p>{`Loading: ${isLoading}`}</p>
             <p>{`พบเจอใบหน้า: ${detected}`}</p>
             <p className="text-2xl font-bold text-warning">{`จำนวนตรวจจับใบหน้า: ${facesDetected}`}</p>
+            {boundingBox.map((item, index) => (
+              <div key={index} className="w-full p-2 border-2 rounded-lg">
+                <div>size : {item.height.toFixed(2)}</div>
+                <div>xCenter : {item.xCenter.toFixed(2)}</div>
+                <div>yCenter : {item.yCenter.toFixed(2)}</div>
+              </div>
+            ))}
           </div>
         </Container>
       </div>
