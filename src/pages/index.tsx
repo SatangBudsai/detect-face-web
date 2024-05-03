@@ -27,7 +27,7 @@ const Home = (props: Props) => {
   const [date, setDate] = useState<Date | undefined>();
   const [arrDate, setArrDate] = useState<Date[] | undefined>();
   const [rangeDate, setRangeDate] = useState<DateRange | undefined>();
-  const [img, setImg] = useState(null);
+  const [img, setImg] = useState<string[]>([]);
 
   const getApi = async () => {
     loaderGlobal.start();
@@ -56,13 +56,15 @@ const Home = (props: Props) => {
         }),
     });
 
-  const capture = useCallback(() => {
+  const capture = () => {
     const imageSrc = webcamRef?.current?.getScreenshot();
-    console.log("imageSrc", imageSrc);
     if (imageSrc) {
-      setImg(imageSrc);
+      console.log("img", img);
+
+      const arrImg = [...img, imageSrc];
+      setImg(arrImg);
     }
-  }, [webcamRef]);
+  };
 
   // console.log("img", img);
   // console.log("webcamRef", webcamRef?.current);
@@ -77,61 +79,73 @@ const Home = (props: Props) => {
           Detect Face Website
         </div>
         <Container className="flex flex-col items-center justify-center gap-10">
-          <div style={{ width, height, position: "relative" }}>
-            {boundingBox.map((box, index) => (
-              <div
-                key={`${index + 1}`}
-                style={{
-                  position: "absolute",
-                  top: `${box.yCenter * 100}%`,
-                  left: `${box.xCenter * 100}%`,
-                  width: `${box.width * 100}%`,
-                  height: `${box.height * 100}%`,
-                  zIndex: 1,
-                }}
-              >
+          <div className="flex gap-5">
+            <div style={{ width, height, position: "relative" }}>
+              {boundingBox.map((box, index) => (
                 <div
-                  className={cn(
-                    "border-2 shadow-lg  rounded-xl h-full w-full",
-                    box.height >= 0.4
-                      ? box.yCenter >= 0.28 &&
-                        box.yCenter <= 0.5 &&
-                        box.xCenter >= 0.25 &&
-                        box.xCenter <= 0.4
-                        ? "border-success shadow-success"
-                        : "border-warning shadow-warning"
-                      : "border-danger shadow-danger"
-                  )}
-                ></div>
-                <div className="mt-2">
-                  {box.height >= 0.4 ? (
-                    box.yCenter >= 0.28 &&
-                    box.yCenter <= 0.5 &&
-                    box.xCenter >= 0.25 &&
-                    box.xCenter <= 0.4 ? (
-                      <div className="text-xs text-success text-nowrap">
-                        กรุณาค้างไว้ 3 วินาที
-                      </div>
+                  key={`${index + 1}`}
+                  style={{
+                    position: "absolute",
+                    top: `${box.yCenter * 100}%`,
+                    left: `${box.xCenter * 100}%`,
+                    width: `${box.width * 100}%`,
+                    height: `${box.height * 100}%`,
+                    zIndex: 1,
+                  }}
+                >
+                  <div
+                    className={cn(
+                      "border-2 shadow-lg  rounded-xl h-full w-full",
+                      box.height >= 0.4
+                        ? box.yCenter >= 0.28 &&
+                          box.yCenter <= 0.5 &&
+                          box.xCenter >= 0.25 &&
+                          box.xCenter <= 0.4
+                          ? "border-success shadow-success"
+                          : "border-warning shadow-warning"
+                        : "border-danger shadow-danger"
+                    )}
+                  ></div>
+                  <div className="mt-2">
+                    {box.height >= 0.4 ? (
+                      box.yCenter >= 0.28 &&
+                      box.yCenter <= 0.5 &&
+                      box.xCenter >= 0.25 &&
+                      box.xCenter <= 0.4 ? (
+                        <div className="text-xs text-success text-nowrap">
+                          กรุณาค้างไว้ 3 วินาที
+                        </div>
+                      ) : (
+                        <div className="text-xs text-warning text-nowrap">
+                          กรุณาขยับให้อยู่ตรงกลาง
+                        </div>
+                      )
                     ) : (
-                      <div className="text-xs text-warning text-nowrap">
-                        กรุณาขยับให้อยู่ตรงกลาง
+                      <div className="text-xs text-danger text-nowrap">
+                        อยู่ห่างเกินไป
                       </div>
-                    )
-                  ) : (
-                    <div className="text-xs text-danger text-nowrap">
-                      อยู่ห่างเกินไป
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-            <Webcam
-              ref={webcamRef}
-              width={width}
-              height={height}
-              forceScreenshotSourceSize
-              className="object-cover p-0 rounded-xl drop-shadow-xl"
-            />
+              ))}
+              <Webcam
+                ref={webcamRef}
+                width={width}
+                height={height}
+                forceScreenshotSourceSize
+                className="object-cover p-0 rounded-xl drop-shadow-xl"
+              />
+            </div>
+            <div className="p-2 border-2 rounded-lg min-w-52">
+              <p className="text-lg font-medium">ค่าการตรวจจับ</p>
+              {boundingBox.map((item, index) => (
+                <div key={index} className="w-full p-2 border-b-2">
+                  <div>size : {item.height.toFixed(2)}</div>
+                  <div>xCenter : {item.xCenter.toFixed(2)}</div>
+                  <div>yCenter : {item.yCenter.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="w-full max-w-[30rem]">
             <p>{`Loading: ${isLoading}`}</p>
@@ -153,22 +167,24 @@ const Home = (props: Props) => {
                   size="sm"
                   color="default"
                   startContent={<Icon icon="pajamas:redo" />}
-                  onClick={() => setImg(null)}
+                  onClick={() => setImg([])}
                 >
-                  Retake
+                  Reset
                 </Button>
               </div>
             </div>
-            <div className="mt-5">
-              {boundingBox.map((item, index) => (
-                <div key={index} className="w-full p-2 border-2 rounded-lg">
-                  <div>size : {item.height.toFixed(2)}</div>
-                  <div>xCenter : {item.xCenter.toFixed(2)}</div>
-                  <div>yCenter : {item.yCenter.toFixed(2)}</div>
-                </div>
-              ))}
-            </div>
           </div>
+        </Container>
+        <Container className="flex justify-center gap-2">
+          {img.length > 0 &&
+            img.map((item, index) => (
+              <Image
+                key={index}
+                src={item}
+                alt="image capture"
+                className="w-24 h-24"
+              />
+            ))}
         </Container>
       </div>
     </Fragment>
