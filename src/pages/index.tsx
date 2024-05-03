@@ -1,10 +1,10 @@
-import { Fragment, ReactElement, useState } from "react";
+import { Fragment, ReactElement, useCallback, useState } from "react";
 import { useTheme } from "next-themes";
 import RootLayout from "@/layouts/root-layout";
 import MainLayout from "@/layouts/main-layout";
 import { DateRange } from "react-day-picker";
 import Alert from "@/components/alert";
-import { Button, Input, cn } from "@nextui-org/react";
+import { Button, Input, Image, cn } from "@nextui-org/react";
 import apiBase from "@/api/base";
 import useLoaderGlobal from "@/hooks/useLoaderGlobal";
 import DatePicker from "@/components/date-picker";
@@ -16,6 +16,7 @@ import Webcam from "react-webcam";
 import { CameraOptions, useFaceDetection } from "react-use-face-detection";
 import FaceDetection from "@mediapipe/face_detection";
 import { Camera } from "@mediapipe/camera_utils";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 type Props = {};
 
@@ -26,6 +27,7 @@ const Home = (props: Props) => {
   const [date, setDate] = useState<Date | undefined>();
   const [arrDate, setArrDate] = useState<Date[] | undefined>();
   const [rangeDate, setRangeDate] = useState<DateRange | undefined>();
+  const [img, setImg] = useState(null);
 
   const getApi = async () => {
     loaderGlobal.start();
@@ -36,7 +38,7 @@ const Home = (props: Props) => {
   const width = 300;
   const height = 300;
 
-  const { webcamRef, boundingBox, isLoading, detected, facesDetected } =
+  const { webcamRef, boundingBox, isLoading, detected, facesDetected, imgRef } =
     useFaceDetection({
       faceDetectionOptions: {
         model: "short",
@@ -54,6 +56,18 @@ const Home = (props: Props) => {
         }),
     });
 
+  const capture = useCallback(() => {
+    const imageSrc = webcamRef?.current?.getScreenshot();
+    console.log("imageSrc", imageSrc);
+    if (imageSrc) {
+      setImg(imageSrc);
+    }
+  }, [webcamRef]);
+
+  // console.log("img", img);
+  // console.log("webcamRef", webcamRef?.current);
+  // console.log("facesDetected", facesDetected);
+  // console.log("imgRef", imgRef);
   // console.log("boundingBox", boundingBox);
 
   return (
@@ -89,24 +103,26 @@ const Home = (props: Props) => {
                       : "border-danger shadow-danger"
                   )}
                 ></div>
-                {box.height >= 0.4 ? (
-                  box.yCenter >= 0.28 &&
-                  box.yCenter <= 0.5 &&
-                  box.xCenter >= 0.25 &&
-                  box.xCenter <= 0.4 ? (
-                    <div className="mt-2 text-xs text-success text-nowrap">
-                      กรุณาค้างไว้ 3 วินาที
-                    </div>
+                <div className="mt-2">
+                  {box.height >= 0.4 ? (
+                    box.yCenter >= 0.28 &&
+                    box.yCenter <= 0.5 &&
+                    box.xCenter >= 0.25 &&
+                    box.xCenter <= 0.4 ? (
+                      <div className="text-xs text-success text-nowrap">
+                        กรุณาค้างไว้ 3 วินาที
+                      </div>
+                    ) : (
+                      <div className="text-xs text-warning text-nowrap">
+                        กรุณาขยับให้อยู่ตรงกลาง
+                      </div>
+                    )
                   ) : (
-                    <div className="mt-2 text-xs text-warning text-nowrap">
-                      กรุณาขยับให้อยู่ตรงกลาง
+                    <div className="text-xs text-danger text-nowrap">
+                      อยู่ห่างเกินไป
                     </div>
-                  )
-                ) : (
-                  <div className="mt-2 text-xs text-danger text-nowrap">
-                    อยู่ห่างเกินไป
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
             <Webcam
@@ -120,14 +136,38 @@ const Home = (props: Props) => {
           <div className="w-full max-w-[30rem]">
             <p>{`Loading: ${isLoading}`}</p>
             <p>{`พบเจอใบหน้า: ${detected}`}</p>
-            <p className="text-2xl font-bold text-warning">{`จำนวนตรวจจับใบหน้า: ${facesDetected}`}</p>
-            {boundingBox.map((item, index) => (
-              <div key={index} className="w-full p-2 border-2 rounded-lg">
-                <div>size : {item.height.toFixed(2)}</div>
-                <div>xCenter : {item.xCenter.toFixed(2)}</div>
-                <div>yCenter : {item.yCenter.toFixed(2)}</div>
+            <div className="flex items-center justify-between ">
+              <p className="text-2xl font-bold text-warning">{`จำนวนตรวจจับใบหน้า: ${facesDetected}`}</p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  color="primary"
+                  startContent={
+                    <Icon icon="solar:camera-linear" className="text-lg" />
+                  }
+                  onClick={capture}
+                >
+                  Capture
+                </Button>
+                <Button
+                  size="sm"
+                  color="default"
+                  startContent={<Icon icon="pajamas:redo" />}
+                  onClick={() => setImg(null)}
+                >
+                  Retake
+                </Button>
               </div>
-            ))}
+            </div>
+            <div className="mt-5">
+              {boundingBox.map((item, index) => (
+                <div key={index} className="w-full p-2 border-2 rounded-lg">
+                  <div>size : {item.height.toFixed(2)}</div>
+                  <div>xCenter : {item.xCenter.toFixed(2)}</div>
+                  <div>yCenter : {item.yCenter.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </Container>
       </div>
