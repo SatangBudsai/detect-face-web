@@ -34,7 +34,7 @@ const RootLayout = (props: Props) => {
           src="/images/background-full.svg"
           removeWrapper
           radius="none"
-          className="w-screen h-screen object-cover fixed -z-10"
+          className="fixed object-cover w-screen h-screen -z-10"
           alt="background"
         />
         <LoadingScreen isLoading={loaderState.loader > 0} />

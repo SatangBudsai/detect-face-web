@@ -57,13 +57,10 @@ const Home = (props: Props) => {
   return (
     <Fragment>
       <div className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center justify-center gap-5">
+        <div className="flex flex-wrap items-center justify-center gap-5 text-4xl font-bold uppercase">
           Detect Face Website
         </div>
-        <Container>
-          <p>{`Loading: ${isLoading}`}</p>
-          <p>{`พบเจอใบหน้า: ${detected}`}</p>
-          <p>{`จำนวนตรวจจับใบหน้า: ${facesDetected}`}</p>
+        <Container className="flex justify-center gap-10">
           <div style={{ width, height, position: "relative" }}>
             {boundingBox.map((box, index) => (
               <div
@@ -85,10 +82,15 @@ const Home = (props: Props) => {
               style={{
                 height,
                 width,
-                position: "absolute",
+                // position: "absolute",
               }}
-              // className="p-0 overflow-hidden bg-red-200 !rounded-lg"
+              className="object-cover p-0 rounded-xl drop-shadow-xl"
             />
+          </div>
+          <div>
+            <p>{`Loading: ${isLoading}`}</p>
+            <p>{`พบเจอใบหน้า: ${detected}`}</p>
+            <p className="text-2xl font-bold text-warning">{`จำนวนตรวจจับใบหน้า: ${facesDetected}`}</p>
           </div>
         </Container>
       </div>
