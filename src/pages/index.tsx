@@ -1,4 +1,4 @@
-import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, MutableRefObject, ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import RootLayout from "@/layouts/root-layout";
 import MainLayout from "@/layouts/main-layout";
@@ -20,25 +20,16 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 
 type Props = {};
 
+const width = 300;
+const height = 300;
+
 const Home = (props: Props) => {
   const loaderGlobal = useLoaderGlobal();
-
-  const { theme, setTheme } = useTheme();
-  const [date, setDate] = useState<Date | undefined>();
-  const [arrDate, setArrDate] = useState<Date[] | undefined>();
-  const [rangeDate, setRangeDate] = useState<DateRange | undefined>();
   const [img, setImg] = useState<string[]>([]);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
-  const getApi = async () => {
-    loaderGlobal.start();
-    await apiBase.get({ urlBase: "https://randomuser.me", url: "/api" });
-    loaderGlobal.stop();
-  };
-
-  const width = 300;
-  const height = 300;
-
-  const { boundingBox, isLoading, detected, facesDetected, imgRef } =
+  const { webcamRef, boundingBox, isLoading, detected, facesDetected } =
     useFaceDetection({
       faceDetectionOptions: {
         model: "short",
@@ -56,19 +47,16 @@ const Home = (props: Props) => {
         }),
     });
 
-  const webcamRef = useRef<Webcam>(null)
   const capture = () => {
-    const imageSrc = webcamRef?.current?.getScreenshot();
-    if (imageSrc) {
+    const imageSrc = webcamRef?.valueOf() as MutableRefObject<Webcam | undefined>;
+    const captureImage = imageSrc.current?.getScreenshot()
+    if (captureImage) {
       console.log("img", img);
 
-      const arrImg = [...img, imageSrc];
+      const arrImg = [...img, captureImage];
       setImg(arrImg);
     }
   };
-
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
   const getDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -152,11 +140,11 @@ const Home = (props: Props) => {
                   width={width}
                   height={height}
                   forceScreenshotSourceSize
-                  videoConstraints={{
-                    deviceId: selectedDevice,
-                    width,
-                    height
-                  }}
+                  // videoConstraints={{
+                  //   deviceId: selectedDevice,
+                  //   width,
+                  //   height
+                  // }}
                   className="object-cover p-0 rounded-xl drop-shadow-xl"
                 />
               )}
@@ -173,14 +161,14 @@ const Home = (props: Props) => {
             </div>
           </div>
           <div>
-            {/* <select value={selectedDevice || ''} onChange={handleDeviceChange}>
+            <select value={selectedDevice || ''} onChange={handleDeviceChange}>
               <option value="">Select a camera</option>
               {devices.map((device) => (
                 <option key={device.deviceId} value={device.deviceId}>
                   {device.label}
                 </option>
               ))}
-            </select> */}
+            </select>
           </div>
           <div className="w-full max-w-[30rem]">
             <p>{`Loading: ${isLoading}`}</p>
